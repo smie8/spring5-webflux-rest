@@ -10,6 +10,8 @@ import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import static org.mockito.ArgumentMatchers.any;
+
 public class VendorControllerTest {
 
     WebTestClient webTestClient;
@@ -46,5 +48,35 @@ public class VendorControllerTest {
                 .uri("/api/v1/vendors/someid")
                 .exchange()
                 .expectBody(Vendor.class);
+    }
+
+    @Test
+    public void testPost() {
+        BDDMockito.given(vendorRepository.saveAll(Mockito.any(Flux.class)))
+                .willReturn(Flux.just(Vendor.builder().build()));
+
+        Mono<Vendor> vendorToSaveMono = Mono.just(Vendor.builder().firstName("First").lastName("Last").build());
+
+        webTestClient.post()
+                .uri("/api/v1/vendors")
+                .body(vendorToSaveMono, Vendor.class)
+                .exchange()
+                .expectStatus()
+                .isCreated();
+    }
+
+    @Test
+    public void testPut() {
+        BDDMockito.given(vendorRepository.save(any(Vendor.class)))
+                .willReturn(Mono.just(Vendor.builder().build()));
+
+        Mono<Vendor> vendorToUpdateMono = Mono.just(Vendor.builder().firstName("First").lastName("Last").build());
+
+        webTestClient.put()
+                .uri("/api/v1/vendors/someid")
+                .body(vendorToUpdateMono, Vendor.class)
+                .exchange()
+                .expectStatus()
+                .isOk();
     }
 }
